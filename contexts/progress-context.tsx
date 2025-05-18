@@ -87,7 +87,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       const totalStars = updatedTopics.reduce((sum, topic) => sum + topic.stars, 0)
       const totalScore =
         updatedTopics.reduce((sum, topic) => sum + topic.score, 0) +
-        progress.games.reduce((sum, game) => sum + game.highScore, 0)
+        progress.games.reduce((sum, game) => sum + (game.level || 0), 0)
 
       setProgress({
         ...progress,
@@ -125,7 +125,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       } else {
         updatedGames.push({
           gameId,
-          highScore: 0,
+          level: 0,
           starsEarned: 0,
           levelsUnlocked: 1,
           lastPlayed: new Date().toISOString(),
@@ -139,7 +139,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       const topicStars = progress.topics.reduce((sum, topic) => sum + topic.stars, 0)
       const totalScore =
         progress.topics.reduce((sum, topic) => sum + topic.score, 0) +
-        updatedGames.reduce((sum, game) => sum + game.highScore, 0)
+        updatedGames.reduce((sum, game) => sum + (game.level || 0), 0)
 
       setProgress({
         ...progress,
@@ -173,6 +173,13 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     return progress.games.find((g) => g.gameId === gameId)
   }
 
+  // Get game level
+  const getGameLevel = (gameId: string): number => {
+    if (!progress) return 0
+    const game = progress.games.find((g) => g.gameId === gameId)
+    return game?.level || 0
+  }
+
   // Context value
   const value: ProgressContextType = {
     progress,
@@ -182,6 +189,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     updateGameProgress,
     getTopicProgress,
     getGameProgress,
+    getGameLevel,
     refreshProgress,
   }
 

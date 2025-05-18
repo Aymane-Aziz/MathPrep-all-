@@ -26,7 +26,7 @@ export type Progress = {
 
 export type GameProgress = {
   gameId: string
-  highScore: number
+  level: number // Changed from highScore to level
   starsEarned: number
   levelsUnlocked: number
   lastPlayed: string
@@ -63,5 +63,6 @@ export type ProgressContextType = {
   updateGameProgress: (gameId: string, data: Partial<GameProgress>) => Promise<void>
   getTopicProgress: (topicId: string) => Progress | undefined
   getGameProgress: (gameId: string) => GameProgress | undefined
+  getGameLevel: (gameId: string) => number
   refreshProgress: () => Promise<void>
 }

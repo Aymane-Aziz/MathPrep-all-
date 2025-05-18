@@ -4,54 +4,65 @@ import { useState, useEffect } from "react"
 import { useProgress } from "@/contexts/progress-context"
 import { useAuth } from "@/contexts/auth-context"
 
-export function useGameProgress(gameId: string) {
+export function useGameProgress(gameId: string, maxLevel = 10) {
   const { isAuthenticated } = useAuth()
-  const { getGameProgress, updateGameProgress } = useProgress()
-  const [localHighScore, setLocalHighScore] = useState<number>(0)
-  const [localStars, setLocalStars] = useState<number>(0)
-  const [localLevelsUnlocked, setLocalLevelsUnlocked] = useState<number>(1)
+  const { getGameProgress, updateGameProgress, getGameLevel } = useProgress()
+  const [level, setLevel] = useState<number>(0)
+  const [completionPercentage, setCompletionPercentage] = useState<number>(0)
+  const [starsEarned, setStarsEarned] = useState<number>(0)
+  const [levelsUnlocked, setLevelsUnlocked] = useState<number>(1)
 
   // Initialize from progress context or localStorage
   useEffect(() => {
+    // Try to get from server first
     const gameProgress = getGameProgress(gameId)
+    const savedLevel = getGameLevel(gameId)
 
     if (gameProgress) {
       // Use server data if available
-      setLocalHighScore(gameProgress.highScore)
-      setLocalStars(gameProgress.starsEarned)
-      setLocalLevelsUnlocked(gameProgress.levelsUnlocked)
+      setLevel(savedLevel)
+      setStarsEarned(gameProgress.starsEarned)
+      setLevelsUnlocked(gameProgress.levelsUnlocked)
     } else {
       // Otherwise try to get from localStorage
       try {
-        const savedHighScore = localStorage.getItem(`${gameId}_highScore`)
+        const savedLocalLevel = localStorage.getItem(`${gameId}_level`)
         const savedStars = localStorage.getItem(`${gameId}_stars`)
-        const savedLevels = localStorage.getItem(`${gameId}_levels`)
+        const savedLevelsUnlocked = localStorage.getItem(`${gameId}_levels`)
 
-        if (savedHighScore) setLocalHighScore(Number.parseInt(savedHighScore, 10))
-        if (savedStars) setLocalStars(Number.parseInt(savedStars, 10))
-        if (savedLevels) setLocalLevelsUnlocked(Number.parseInt(savedLevels, 10))
+        if (savedLocalLevel) setLevel(Number.parseInt(savedLocalLevel, 10))
+        if (savedStars) setStarsEarned(Number.parseInt(savedStars, 10))
+        if (savedLevelsUnlocked) setLevelsUnlocked(Number.parseInt(savedLevelsUnlocked, 10))
       } catch (error) {
         console.error("Error loading game progress from localStorage:", error)
       }
     }
-  }, [gameId, getGameProgress])
 
-  // Update high score
-  const updateHighScore = (newScore: number) => {
-    if (newScore > localHighScore) {
-      setLocalHighScore(newScore)
+    // Calculate completion percentage
+    const percentage = Math.min((savedLevel / maxLevel) * 100, 100)
+    setCompletionPercentage(percentage)
+  }, [gameId, getGameProgress, getGameLevel, maxLevel])
+
+  // Update level
+  const updateLevel = (newLevel: number) => {
+    if (newLevel > level) {
+      setLevel(newLevel)
+
+      // Calculate new completion percentage
+      const percentage = Math.min((newLevel / maxLevel) * 100, 100)
+      setCompletionPercentage(percentage)
 
       // Save to localStorage as backup
       try {
-        localStorage.setItem(`${gameId}_highScore`, newScore.toString())
+        localStorage.setItem(`${gameId}_level`, newLevel.toString())
       } catch (error) {
-        console.error("Error saving high score to localStorage:", error)
+        console.error("Error saving level to localStorage:", error)
       }
 
       // If authenticated, update server
       if (isAuthenticated) {
         updateGameProgress(gameId, {
-          highScore: newScore,
+          level: newLevel,
           lastPlayed: new Date().toISOString(),
         })
       }
@@ -60,8 +71,8 @@ export function useGameProgress(gameId: string) {
 
   // Update stars
   const updateStars = (newStars: number) => {
-    const totalStars = localStars + newStars
-    setLocalStars(totalStars)
+    const totalStars = starsEarned + newStars
+    setStarsEarned(totalStars)
 
     // Save to localStorage as backup
     try {
@@ -81,8 +92,8 @@ export function useGameProgress(gameId: string) {
 
   // Unlock a new level
   const unlockLevel = (level: number) => {
-    if (level > localLevelsUnlocked) {
-      setLocalLevelsUnlocked(level)
+    if (level > levelsUnlocked) {
+      setLevelsUnlocked(level)
 
       // Save to localStorage as backup
       try {
@@ -102,10 +113,11 @@ export function useGameProgress(gameId: string) {
   }
 
   return {
-    highScore: localHighScore,
-    stars: localStars,
-    levelsUnlocked: localLevelsUnlocked,
-    updateHighScore,
+    level,
+    completionPercentage,
+    starsEarned,
+    levelsUnlocked,
+    updateLevel,
     updateStars,
     unlockLevel,
   }

@@ -3,7 +3,7 @@ import clientPromise from "@/lib/mongodb"
 import { authenticateRequest, unauthorized } from "@/lib/auth-middleware"
 import { ObjectId } from "mongodb"
 
-export async function PUT(req: NextRequest, { params }: { params: { gameId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { gameId: string } }) {
   try {
     // Authenticate request
     const { authenticated, userId } = await authenticateRequest(req)
@@ -12,16 +12,14 @@ export async function PUT(req: NextRequest, { params }: { params: { gameId: stri
       return unauthorized()
     }
 
-    const { gameId } = params
-    const progressData = await req.json()
+    const gameId = params.gameId
 
     // Connect to MongoDB
     const client = await clientPromise
     const db = client.db("mathworld")
-    const progressCollection = db.collection("progress")
 
     // Find user progress
-    const progress = await progressCollection.findOne({
+    const progress = await db.collection("progress").findOne({
       userId: new ObjectId(userId),
     })
 
@@ -29,77 +27,96 @@ export async function PUT(req: NextRequest, { params }: { params: { gameId: stri
       return NextResponse.json({ error: "Progress not found" }, { status: 404 })
     }
 
-    // Check if game already exists in progress
-    const now = new Date()
-    const gameIndex = progress.games.findIndex((g: any) => g.id === gameId)
+    // Find game progress
+    const gameProgress = progress.games.find((g: any) => g.gameId === gameId)
 
-    if (gameIndex === -1) {
-      // Add new game progress
-      await progressCollection.updateOne(
-        { userId: new ObjectId(userId) },
-        {
-          $push: {
-            games: {
-              id: gameId,
-              ...progressData,
-              lastPlayed: now,
-            },
-          },
-          $set: { updatedAt: now },
-        },
-      )
-    } else {
-      // Update existing game progress
-      await progressCollection.updateOne(
-        { userId: new ObjectId(userId), "games.id": gameId },
-        {
-          $set: {
-            "games.$": {
-              id: gameId,
-              ...progressData,
-              lastPlayed: now,
-            },
-            updatedAt: now,
-          },
-        },
-      )
+    if (!gameProgress) {
+      return NextResponse.json({ error: "Game progress not found" }, { status: 404 })
     }
 
-    // Update total score if provided
-    if (progressData.score !== undefined) {
-      // Calculate total score
-      const updatedProgress = await progressCollection.findOne({
-        userId: new ObjectId(userId),
-      })
-
-      const totalScore = updatedProgress.games.reduce((sum: number, game: any) => sum + (game.score || 0), 0)
-
-      await progressCollection.updateOne({ userId: new ObjectId(userId) }, { $set: { totalScore, updatedAt: now } })
+    // Format dates for JSON response
+    const formattedGameProgress = {
+      ...gameProgress,
+      lastPlayed: gameProgress.lastPlayed ? gameProgress.lastPlayed.toISOString() : null,
     }
 
-    // Return updated progress
-    const updatedProgress = await progressCollection.findOne({
+    // Return game progress
+    return NextResponse.json({ gameProgress: formattedGameProgress })
+  } catch (error) {
+    console.error("Get game progress error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest, { params }: { params: { gameId: string } }) {
+  try {
+    // Authenticate request
+    const { authenticated, userId } = await authenticateRequest(req)
+
+    if (!authenticated || !userId) {
+      return unauthorized()
+    }
+
+    const gameId = params.gameId
+    const data = await req.json()
+
+    // Connect to MongoDB
+    const client = await clientPromise
+    const db = client.db("mathworld")
+
+    // Find user progress
+    const progress = await db.collection("progress").findOne({
       userId: new ObjectId(userId),
     })
 
-    // Format dates for JSON response
-    const formattedProgress = {
-      ...updatedProgress,
-      userId: updatedProgress.userId.toString(),
-      createdAt: updatedProgress.createdAt.toISOString(),
-      updatedAt: updatedProgress.updatedAt.toISOString(),
-      lastLoginDate: updatedProgress.lastLoginDate.toISOString(),
-      topics: updatedProgress.topics.map((topic: any) => ({
-        ...topic,
-        lastAccessed: topic.lastAccessed ? topic.lastAccessed.toISOString() : null,
-      })),
-      games: updatedProgress.games.map((game: any) => ({
-        ...game,
-        lastPlayed: game.lastPlayed ? game.lastPlayed.toISOString() : null,
-      })),
+    if (!progress) {
+      return NextResponse.json({ error: "Progress not found" }, { status: 404 })
     }
 
-    return NextResponse.json(formattedProgress)
+    // Update game progress
+    const now = new Date()
+    const games = progress.games || []
+    const gameIndex = games.findIndex((g: any) => g.gameId === gameId)
+
+    if (gameIndex >= 0) {
+      // Update existing game progress
+      games[gameIndex] = {
+        ...games[gameIndex],
+        ...data,
+        lastPlayed: now,
+      }
+    } else {
+      // Add new game progress
+      games.push({
+        gameId,
+        level: 0,
+        starsEarned: 0,
+        levelsUnlocked: 1,
+        lastPlayed: now,
+        achievements: [],
+        ...data,
+      })
+    }
+
+    // Update progress document
+    await db.collection("progress").updateOne(
+      { userId: new ObjectId(userId) },
+      {
+        $set: {
+          games,
+          updatedAt: now,
+        },
+      },
+    )
+
+    // Return updated game progress
+    const updatedGameProgress = games.find((g: any) => g.gameId === gameId)
+    const formattedGameProgress = {
+      ...updatedGameProgress,
+      lastPlayed: updatedGameProgress.lastPlayed.toISOString(),
+    }
+
+    return NextResponse.json({ gameProgress: formattedGameProgress })
   } catch (error) {
     console.error("Update game progress error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
