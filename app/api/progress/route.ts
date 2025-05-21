@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     // Authenticate request
     const { authenticated, userId } = await authenticateRequest(req)
 
-    if (!authenticated || !userId) {
+    if (!authenticated || !userId || typeof userId !== 'string') {
       return unauthorized()
     }
 

@@ -8,7 +8,7 @@ export async function PUT(req: NextRequest, { params }: { params: { topicId: str
     // Authenticate request
     const { authenticated, userId } = await authenticateRequest(req)
 
-    if (!authenticated || !userId) {
+    if (!authenticated || !userId || typeof userId !== 'string') {
       return unauthorized()
     }
 
@@ -72,6 +72,10 @@ export async function PUT(req: NextRequest, { params }: { params: { topicId: str
         userId: new ObjectId(userId),
       })
 
+      if (!updatedProgress) {
+        return NextResponse.json({ error: "Progress not found after update" }, { status: 404 })
+      }
+
       const totalStars = updatedProgress.topics.reduce((sum: number, topic: any) => sum + (topic.stars || 0), 0)
 
       await progressCollection.updateOne({ userId: new ObjectId(userId) }, { $set: { totalStars, updatedAt: now } })
@@ -81,6 +85,10 @@ export async function PUT(req: NextRequest, { params }: { params: { topicId: str
     const updatedProgress = await progressCollection.findOne({
       userId: new ObjectId(userId),
     })
+
+    if (!updatedProgress) {
+      return NextResponse.json({ error: "Progress not found after update" }, { status: 404 })
+    }
 
     // Format dates for JSON response
     const formattedProgress = {

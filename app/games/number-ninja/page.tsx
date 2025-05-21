@@ -7,9 +7,14 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { ArrowLeft, Trophy } from "lucide-react"
 
+interface Problem {
+  count: number;
+  options: number[];
+}
+
 export default function NumberNinjaPage() {
   const [gameState, setGameState] = useState<"ready" | "playing" | "finished">("ready")
-  const [currentProblem, setCurrentProblem] = useState({ count: 0, options: [] })
+  const [currentProblem, setCurrentProblem] = useState<Problem>({ count: 0, options: [] })
   const [score, setScore] = useState(0)
   const [level, setLevel] = useState(1)
   const [lives, setLives] = useState(3)

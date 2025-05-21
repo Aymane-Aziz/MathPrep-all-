@@ -10,7 +10,7 @@ export async function POST(req: NextRequest, { params }: { params: { achievement
     // Authenticate request
     const { authenticated, userId } = await authenticateRequest(req)
 
-    if (!authenticated || !userId) {
+    if (!authenticated || !userId || typeof userId !== 'string') {
       return unauthorized()
     }
 

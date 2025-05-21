@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, { params }: { params: { gameId: stri
     // Authenticate request
     const { authenticated, userId } = await authenticateRequest(req)
 
-    if (!authenticated || !userId) {
+    if (!authenticated || !userId || typeof userId !== 'string') {
       return unauthorized()
     }
 
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: { gameId: str
     // Authenticate request
     const { authenticated, userId } = await authenticateRequest(req)
 
-    if (!authenticated || !userId) {
+    if (!authenticated || !userId || typeof userId !== 'string') {
       return unauthorized()
     }
 

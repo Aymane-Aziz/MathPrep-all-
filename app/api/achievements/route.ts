@@ -92,16 +92,19 @@ export async function GET(req: NextRequest) {
     const client = await clientPromise
     const db = client.db("mathworld")
 
+    // Convert userId to ObjectId
+    const userObjectId = new ObjectId(userId.toString())
+
     // Get user progress for calculating achievement progress
     const progress = await db.collection("progress").findOne({
-      userId: new ObjectId(userId),
+      userId: userObjectId,
     })
 
     // Get user achievements
     const userAchievements = await db
       .collection("achievements")
       .find({
-        userId: new ObjectId(userId),
+        userId: userObjectId,
       })
       .toArray()
 

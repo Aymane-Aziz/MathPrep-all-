@@ -9,7 +9,7 @@ export async function PUT(req: NextRequest) {
     // Authenticate request
     const { authenticated, userId } = await authenticateRequest(req)
 
-    if (!authenticated || !userId) {
+    if (!authenticated || !userId || typeof userId !== 'string') {
       return unauthorized()
     }
 
@@ -59,6 +59,10 @@ export async function PUT(req: NextRequest) {
     const updatedUser = await usersCollection.findOne({
       _id: new ObjectId(userId),
     })
+
+    if (!updatedUser) {
+      return NextResponse.json({ error: "Failed to retrieve updated user data" }, { status: 500 })
+    }
 
     return NextResponse.json({
       id: updatedUser._id.toString(),
