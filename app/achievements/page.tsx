@@ -84,7 +84,7 @@ export default function AchievementsPage() {
             icon: "📅",
             category: "engagement",
             points: 15,
-            isUnlocked: true,
+            isUnlocked: false,
             unlockedAt: "2023-05-20T09:15:00Z",
           },
           {
@@ -121,7 +121,7 @@ export default function AchievementsPage() {
             icon: "⭐",
             category: "mastery",
             points: 15,
-            isUnlocked: true,
+            isUnlocked: false,
             unlockedAt: "2023-05-18T11:45:00Z",
           },
           {

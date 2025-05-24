@@ -52,6 +52,11 @@ export default function ProgressAnalyticsPage() {
     )
   }
 
+  // Calculate total stars from game scores
+  const totalStars = progress ? Object.keys(progress)
+    .filter(key => key.startsWith('game'))
+    .reduce((sum, key) => sum + (progress[key as keyof typeof progress] as number), 0) : 0
+
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6 flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
@@ -84,7 +89,7 @@ export default function ProgressAnalyticsPage() {
           <CardContent>
             <div className="flex items-center">
               <Star className="mr-2 h-5 w-5 text-yellow-500" />
-              <span className="text-2xl font-bold">{progress?.totalStars || 0}</span>
+              <span className="text-2xl font-bold">{totalStars}</span>
             </div>
             <p className="mt-1 text-xs text-gray-500">
               {timeRange === "week" ? "+12 this week" : timeRange === "month" ? "+45 this month" : "+120 all time"}
@@ -94,12 +99,12 @@ export default function ProgressAnalyticsPage() {
 
         <Card className="border-blue-100">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700">Total Score</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-700">Overall Score</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
               <Trophy className="mr-2 h-5 w-5 text-blue-500" />
-              <span className="text-2xl font-bold">{progress?.totalScore || 0}</span>
+              <span className="text-2xl font-bold">{progress?.overallStar || 0}</span>
             </div>
             <p className="mt-1 text-xs text-gray-500">
               {timeRange === "week" ? "+250 this week" : timeRange === "month" ? "+980 this month" : "+2450 all time"}
@@ -109,13 +114,16 @@ export default function ProgressAnalyticsPage() {
 
         <Card className="border-blue-100">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700">Lessons Completed</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-700">Games Completed</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
               <BookOpen className="mr-2 h-5 w-5 text-green-500" />
               <span className="text-2xl font-bold">
-                {progress?.topics.reduce((sum, topic) => sum + topic.completed, 0) || 0}
+                {progress ? Object.keys(progress)
+                  .filter(key => key.startsWith('game'))
+                  .filter(key => (progress[key as keyof typeof progress] as number) > 0)
+                  .length : 0}
               </span>
             </div>
             <p className="mt-1 text-xs text-gray-500">
@@ -131,9 +139,9 @@ export default function ProgressAnalyticsPage() {
           <CardContent>
             <div className="flex items-center">
               <Activity className="mr-2 h-5 w-5 text-orange-500" />
-              <span className="text-2xl font-bold">{progress?.streakDays || 0} days</span>
+              <span className="text-2xl font-bold">0 days</span>
             </div>
-            <p className="mt-1 text-xs text-gray-500">Best streak: 14 days</p>
+            <p className="mt-1 text-xs text-gray-500">Best streak: 0 days</p>
           </CardContent>
         </Card>
       </div>
@@ -157,20 +165,20 @@ export default function ProgressAnalyticsPage() {
                 <CardTitle className="flex items-center text-blue-700">
                   <BarChart3 className="mr-2 h-5 w-5" /> Progress Over Time
                 </CardTitle>
-                <CardDescription>Your learning progress across all topics</CardDescription>
+                <CardDescription>Your learning progress across all games</CardDescription>
               </CardHeader>
               <CardContent className="h-80">
                 <ProgressChart timeRange={timeRange} />
               </CardContent>
             </Card>
 
-            {/* Topic Progress */}
+            {/* Game Progress */}
             <Card className="border-blue-100">
               <CardHeader>
                 <CardTitle className="flex items-center text-blue-700">
-                  <PieChart className="mr-2 h-5 w-5" /> Topic Progress
+                  <PieChart className="mr-2 h-5 w-5" /> Game Progress
                 </CardTitle>
-                <CardDescription>Completion percentage by topic</CardDescription>
+                <CardDescription>Completion percentage by game</CardDescription>
               </CardHeader>
               <CardContent className="h-64">
                 <TopicProgressChart />
@@ -183,7 +191,7 @@ export default function ProgressAnalyticsPage() {
                 <CardTitle className="flex items-center text-blue-700">
                   <Activity className="mr-2 h-5 w-5" /> Strengths & Weaknesses
                 </CardTitle>
-                <CardDescription>Your performance across different skills</CardDescription>
+                <CardDescription>Your performance across different games</CardDescription>
               </CardHeader>
               <CardContent className="h-64">
                 <StrengthsChart />
@@ -200,35 +208,36 @@ export default function ProgressAnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  {/* Original hardcoded achievements or a placeholder */}
+                   <div className="flex items-center justify-between opacity-50">
                     <div className="flex items-center">
                       <div className="mr-4 rounded-full bg-yellow-100 p-2 text-yellow-600">🏆</div>
                       <div>
                         <h4 className="font-medium">Math Explorer</h4>
-                        <p className="text-sm text-gray-500">Visited all topic areas</p>
+                        <p className="text-sm text-gray-500">Completed all games</p>
                       </div>
                     </div>
-                    <Badge className="bg-green-100 text-green-700">3 days ago</Badge>
+                    <Badge variant="outline" className="bg-gray-100 text-gray-500">Locked</Badge>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between opacity-50">
                     <div className="flex items-center">
                       <div className="mr-4 rounded-full bg-blue-100 p-2 text-blue-600">⭐</div>
                       <div>
-                        <h4 className="font-medium">Perfect Score</h4>
-                        <p className="text-sm text-gray-500">Got 100% on Addition quiz</p>
+                        <h4 className="font-medium">Perfect Score placeholder</h4>
+                        <p className="text-sm text-gray-500">Get 100% on any quiz</p>
                       </div>
                     </div>
-                    <Badge className="bg-green-100 text-green-700">1 week ago</Badge>
+                    <Badge variant="outline" className="bg-gray-100 text-gray-500">Locked</Badge>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between opacity-50">
                     <div className="flex items-center">
                       <div className="mr-4 rounded-full bg-purple-100 p-2 text-purple-600">🎮</div>
                       <div>
-                        <h4 className="font-medium">Game Master</h4>
-                        <p className="text-sm text-gray-500">Completed all levels in Shape Sorter</p>
+                        <h4 className="font-medium">Game Master placeholder</h4>
+                        <p className="text-sm text-gray-500">Completed all levels in Addition Race</p>
                       </div>
                     </div>
-                    <Badge className="bg-green-100 text-green-700">2 weeks ago</Badge>
+                    <Badge variant="outline" className="bg-gray-100 text-gray-500">Locked</Badge>
                   </div>
                 </div>
                 <Button variant="link" className="mt-2 w-full text-blue-600">
@@ -252,154 +261,6 @@ export default function ProgressAnalyticsPage() {
           </div>
         </TabsContent>
 
-        {/* Topics Tab */}
-        <TabsContent value="topics" className="space-y-4">
-          <Card className="border-blue-100">
-            <CardHeader>
-              <CardTitle className="text-blue-700">Topic Progress</CardTitle>
-              <CardDescription>Your progress across all math topics</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Addition Topic */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="mr-3 rounded-full bg-blue-100 p-1.5 text-blue-700">➕</div>
-                      <h3 className="font-medium">Addition</h3>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        <Star className="mr-1 h-3 w-3" /> 12
-                      </Badge>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Trophy className="mr-1 h-3 w-3" /> 320
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium">Progress</span>
-                    <span className="text-xs font-medium">85%</span>
-                  </div>
-                  <Progress value={85} className="h-2" />
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Last activity: 2 days ago</span>
-                    <span className="ml-4">Completed: 6/7 lessons</span>
-                  </div>
-                </div>
-
-                {/* Subtraction Topic */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="mr-3 rounded-full bg-red-100 p-1.5 text-red-700">➖</div>
-                      <h3 className="font-medium">Subtraction</h3>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        <Star className="mr-1 h-3 w-3" /> 8
-                      </Badge>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Trophy className="mr-1 h-3 w-3" /> 240
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium">Progress</span>
-                    <span className="text-xs font-medium">60%</span>
-                  </div>
-                  <Progress value={60} className="h-2" />
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Last activity: 5 days ago</span>
-                    <span className="ml-4">Completed: 3/5 lessons</span>
-                  </div>
-                </div>
-
-                {/* Multiplication Topic */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="mr-3 rounded-full bg-green-100 p-1.5 text-green-700">✖️</div>
-                      <h3 className="font-medium">Multiplication</h3>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        <Star className="mr-1 h-3 w-3" /> 15
-                      </Badge>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Trophy className="mr-1 h-3 w-3" /> 380
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium">Progress</span>
-                    <span className="text-xs font-medium">75%</span>
-                  </div>
-                  <Progress value={75} className="h-2" />
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Last activity: 1 day ago</span>
-                    <span className="ml-4">Completed: 6/8 lessons</span>
-                  </div>
-                </div>
-
-                {/* Shapes Topic */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="mr-3 rounded-full bg-purple-100 p-1.5 text-purple-700">🔷</div>
-                      <h3 className="font-medium">Shapes</h3>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        <Star className="mr-1 h-3 w-3" /> 10
-                      </Badge>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Trophy className="mr-1 h-3 w-3" /> 290
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium">Progress</span>
-                    <span className="text-xs font-medium">40%</span>
-                  </div>
-                  <Progress value={40} className="h-2" />
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Last activity: 3 days ago</span>
-                    <span className="ml-4">Completed: 2/5 lessons</span>
-                  </div>
-                </div>
-
-                {/* Counting Topic */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="mr-3 rounded-full bg-orange-100 p-1.5 text-orange-700">🔢</div>
-                      <h3 className="font-medium">Counting</h3>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        <Star className="mr-1 h-3 w-3" /> 5
-                      </Badge>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Trophy className="mr-1 h-3 w-3" /> 150
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium">Progress</span>
-                    <span className="text-xs font-medium">100%</span>
-                  </div>
-                  <Progress value={100} className="h-2" />
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Last activity: 1 week ago</span>
-                    <span className="ml-4">Completed: 4/4 lessons</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         {/* Games Tab */}
         <TabsContent value="games" className="space-y-4">
           <Card className="border-blue-100">
@@ -418,130 +279,41 @@ export default function ProgressAnalyticsPage() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        <Star className="mr-1 h-3 w-3" /> 8
+                        <Star className="mr-1 h-3 w-3" /> {progress?.game2 || 0}
                       </Badge>
                       <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Trophy className="mr-1 h-3 w-3" /> 520
+                        <Trophy className="mr-1 h-3 w-3" /> Level {Math.floor((progress?.game2 || 0) / 10) + 1}
                       </Badge>
                     </div>
                   </div>
                   <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium">Levels Unlocked</span>
-                    <span className="text-xs font-medium">3/5</span>
+                    <span className="text-xs font-medium">Progress</span>
+                    <span className="text-xs font-medium">{Math.min(((progress?.game2 || 0) / 100) * 100, 100)}%</span>
                   </div>
-                  <Progress value={60} className="h-2" />
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Last played: 1 day ago</span>
-                    <span className="ml-4">Best time: 45 seconds</span>
-                  </div>
-                </div>
-
-                {/* Subtraction Submarine Game */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="mr-3 rounded-full bg-cyan-100 p-1.5 text-cyan-700">🚢</div>
-                      <h3 className="font-medium">Subtraction Submarine</h3>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        <Star className="mr-1 h-3 w-3" /> 6
-                      </Badge>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Trophy className="mr-1 h-3 w-3" /> 380
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium">Levels Unlocked</span>
-                    <span className="text-xs font-medium">2/5</span>
-                  </div>
-                  <Progress value={40} className="h-2" />
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Last played: 3 days ago</span>
-                    <span className="ml-4">Highest depth: 250m</span>
-                  </div>
-                </div>
-
-                {/* Multiplication Mountain Game */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="mr-3 rounded-full bg-green-100 p-1.5 text-green-700">⛰️</div>
-                      <h3 className="font-medium">Multiplication Mountain</h3>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        <Star className="mr-1 h-3 w-3" /> 12
-                      </Badge>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Trophy className="mr-1 h-3 w-3" /> 640
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium">Levels Unlocked</span>
-                    <span className="text-xs font-medium">4/5</span>
-                  </div>
-                  <Progress value={80} className="h-2" />
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Last played: 2 days ago</span>
-                    <span className="ml-4">Highest altitude: 8000m</span>
-                  </div>
-                </div>
-
-                {/* Shape Sorter Game */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="mr-3 rounded-full bg-purple-100 p-1.5 text-purple-700">🧩</div>
-                      <h3 className="font-medium">Shape Sorter</h3>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        <Star className="mr-1 h-3 w-3" /> 15
-                      </Badge>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Trophy className="mr-1 h-3 w-3" /> 720
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium">Levels Unlocked</span>
-                    <span className="text-xs font-medium">5/5</span>
-                  </div>
-                  <Progress value={100} className="h-2" />
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Last played: Today</span>
-                    <span className="ml-4">Perfect sorts: 12</span>
-                  </div>
+                  <Progress value={Math.min(((progress?.game2 || 0) / 100) * 100, 100)} className="h-2" />
                 </div>
 
                 {/* Memory Match Game */}
                 <div>
                   <div className="mb-2 flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="mr-3 rounded-full bg-pink-100 p-1.5 text-pink-700">🧠</div>
+                      <div className="mr-3 rounded-full bg-blue-100 p-1.5 text-blue-700">🧠</div>
                       <h3 className="font-medium">Memory Match</h3>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        <Star className="mr-1 h-3 w-3" /> 9
+                        <Star className="mr-1 h-3 w-3" /> {progress?.game4 || 0}
                       </Badge>
                       <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        <Trophy className="mr-1 h-3 w-3" /> 450
+                        <Trophy className="mr-1 h-3 w-3" /> Level {Math.floor((progress?.game4 || 0) / 10) + 1}
                       </Badge>
                     </div>
                   </div>
                   <div className="mb-1 flex items-center justify-between">
-                    <span className="text-xs font-medium">Levels Unlocked</span>
-                    <span className="text-xs font-medium">3/5</span>
+                    <span className="text-xs font-medium">Progress</span>
+                    <span className="text-xs font-medium">{Math.min(((progress?.game4 || 0) / 100) * 100, 100)}%</span>
                   </div>
-                  <Progress value={60} className="h-2" />
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Last played: 4 days ago</span>
-                    <span className="ml-4">Best time: 32 seconds</span>
-                  </div>
+                  <Progress value={Math.min(((progress?.game4 || 0) / 100) * 100, 100)} className="h-2" />
                 </div>
               </div>
             </CardContent>
