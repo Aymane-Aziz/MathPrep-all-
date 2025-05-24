@@ -70,14 +70,6 @@ export const authApi = {
   logout: async () => {
     // Remove token from localStorage
     localStorage.removeItem("mathworld_token")
-
-    // Optional: notify backend about logout
-    try {
-      await fetchWithAuth("/auth/logout", { method: "POST" })
-    } catch (error) {
-      console.error("Logout notification failed:", error)
-      // Continue with logout even if backend notification fails
-    }
   },
 
   resetPassword: async (email: string) => {
