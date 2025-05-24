@@ -105,17 +105,10 @@ export const progressApi = {
     return await fetchWithAuth("/progress")
   },
 
-  updateTopicProgress: async (topicId: string, progressData: any) => {
-    return await fetchWithAuth(`/progress/topics/${topicId}`, {
-      method: "PUT",
-      body: JSON.stringify(progressData),
-    })
-  },
-
-  updateGameProgress: async (gameId: string, progressData: any) => {
+  updateGameProgress: async (gameId: string, stars: number) => {
     return await fetchWithAuth(`/progress/games/${gameId}`, {
       method: "PUT",
-      body: JSON.stringify(progressData),
+      body: JSON.stringify({ stars }),
     })
   },
 }

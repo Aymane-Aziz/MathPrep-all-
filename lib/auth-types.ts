@@ -16,30 +16,15 @@ export type AuthState = {
 }
 
 export type Progress = {
-  topicId: string
-  completed: number
-  totalLessons: number
-  lastAccessed: string
-  score: number
-  stars: number
-}
-
-export type GameProgress = {
-  gameId: string
-  level: number // Changed from highScore to level
-  starsEarned: number
-  levelsUnlocked: number
-  lastPlayed: string
-  achievements: string[]
-}
-
-export type UserProgress = {
-  topics: Progress[]
-  games: GameProgress[]
-  totalStars: number
-  totalScore: number
-  streakDays: number
-  lastLoginDate: string
+  id: string
+  userId: string
+  game1: number
+  game2: number
+  game3: number
+  game4: number
+  game5: number
+  game6: number
+  overallStar: number
 }
 
 export type AuthContextType = {
@@ -56,13 +41,9 @@ export type AuthContextType = {
 }
 
 export type ProgressContextType = {
-  progress: UserProgress | null
+  progress: Progress | null
   isLoading: boolean
   error: string | null
-  updateTopicProgress: (topicId: string, data: Partial<Progress>) => Promise<void>
-  updateGameProgress: (gameId: string, data: Partial<GameProgress>) => Promise<void>
-  getTopicProgress: (topicId: string) => Progress | undefined
-  getGameProgress: (gameId: string) => GameProgress | undefined
-  getGameLevel: (gameId: string) => number
+  updateGameProgress: (gameId: string, stars: number) => Promise<void>
   refreshProgress: () => Promise<void>
 }

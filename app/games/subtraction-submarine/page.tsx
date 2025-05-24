@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ProgressBar } from "@/components/progress-bar"
 import Link from "next/link"
 import { ArrowLeft, Trophy } from "lucide-react"
+import { useProgress } from "@/contexts/progress-context"
 
 export default function SubtractionSubmarinePage() {
   const [gameState, setGameState] = useState<"ready" | "playing" | "finished">("ready")
@@ -18,6 +19,8 @@ export default function SubtractionSubmarinePage() {
   const [maxDepth, setMaxDepth] = useState(0)
   const [oxygen, setOxygen] = useState(100)
   const [feedback, setFeedback] = useState<"correct" | "incorrect" | null>(null)
+  const [bestScore, setBestScore] = useState(0)
+  const { updateGameProgress } = useProgress()
 
   // Generate a new subtraction problem
   const generateProblem = () => {
@@ -47,49 +50,46 @@ export default function SubtractionSubmarinePage() {
     const correctAnswer = currentProblem.num1 - currentProblem.num2
 
     if (userAnswer === correctAnswer) {
-      const newScore = score + 10
-      const newDepth = depth + 50
-
-      setScore(newScore)
-      setDepth(newDepth)
-      setMaxDepth(Math.max(maxDepth, newDepth))
+      setScore(score + 10)
+      setDepth(depth + 50)
+      setMaxDepth(Math.max(maxDepth, depth + 50))
       setFeedback("correct")
-
       setTimeout(() => {
         generateProblem()
-      }, 1000)
+      }, 500)
     } else {
-      setOxygen(Math.max(0, oxygen - 20))
       setFeedback("incorrect")
-
-      if (oxygen <= 20) {
-        setTimeout(() => {
-          setGameState("finished")
-        }, 1000)
-      } else {
-        setTimeout(() => {
-          setFeedback(null)
-        }, 1000)
-      }
+      setOxygen(Math.max(0, oxygen - 20))
     }
   }
 
-  // Oxygen effect
+  // Oxygen timer effect
   useEffect(() => {
     let timer: NodeJS.Timeout
 
     if (gameState === "playing" && oxygen > 0) {
       timer = setTimeout(() => {
-        setOxygen(Math.max(0, oxygen - 1))
+        setOxygen(oxygen - 1)
       }, 1000)
     } else if (oxygen === 0 && gameState === "playing") {
       setGameState("finished")
+      
+      // Update best score if needed
+      if (score > bestScore) {
+        setBestScore(score)
+        localStorage.setItem("subtractionSubmarineBestScore", score.toString())
+      }
+
+      // Update progress with actual score
+      if (score > 0) {
+        updateGameProgress("3", score) // Subtraction Submarine is game3
+      }
     }
 
     return () => {
       if (timer) clearTimeout(timer)
     }
-  }, [oxygen, gameState])
+  }, [oxygen, gameState, score, bestScore, updateGameProgress])
 
   return (
     <div className="container mx-auto space-y-6 py-6">

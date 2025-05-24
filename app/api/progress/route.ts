@@ -25,13 +25,15 @@ export async function GET(req: NextRequest) {
       // Create initial progress if not found
       const now = new Date()
       const initialProgress = {
+        id: new ObjectId().toString(),
         userId: new ObjectId(userId),
-        topics: [],
-        games: [],
-        totalStars: 0,
-        totalScore: 0,
-        streakDays: 0,
-        lastLoginDate: now,
+        game1: 0,
+        game2: 0,
+        game3: 0,
+        game4: 0,
+        game5: 0,
+        game6: 0,
+        overallStar: 0,
         createdAt: now,
         updatedAt: now,
       }
@@ -43,7 +45,6 @@ export async function GET(req: NextRequest) {
         userId: userId,
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
-        lastLoginDate: now.toISOString(),
       })
     }
 
@@ -53,18 +54,8 @@ export async function GET(req: NextRequest) {
       userId: progress.userId.toString(),
       createdAt: progress.createdAt.toISOString(),
       updatedAt: progress.updatedAt.toISOString(),
-      lastLoginDate: progress.lastLoginDate.toISOString(),
-      topics: progress.topics.map((topic: any) => ({
-        ...topic,
-        lastAccessed: topic.lastAccessed ? topic.lastAccessed.toISOString() : null,
-      })),
-      games: progress.games.map((game: any) => ({
-        ...game,
-        lastPlayed: game.lastPlayed ? game.lastPlayed.toISOString() : null,
-      })),
     }
 
-    // Return progress data
     return NextResponse.json(formattedProgress)
   } catch (error) {
     console.error("Get progress error:", error)

@@ -31,16 +31,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    // Update last login date
-    const now = new Date()
-    await db.collection("progress").updateOne(
-      { userId: user._id },
-      {
-        $set: { lastLoginDate: now, updatedAt: now },
-        $inc: { streakDays: 1 },
-      },
-    )
-
     // Create JWT token
     const token = await signJWT({
       userId: user._id.toString(),

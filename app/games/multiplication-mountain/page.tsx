@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ProgressBar } from "@/components/progress-bar"
 import Link from "next/link"
 import { ArrowLeft, Trophy } from "lucide-react"
+import { useProgress } from "@/contexts/progress-context"
 
 export default function MultiplicationMountainPage() {
   const [gameState, setGameState] = useState<"ready" | "playing" | "finished">("ready")
@@ -18,15 +19,15 @@ export default function MultiplicationMountainPage() {
   const [maxAltitude, setMaxAltitude] = useState(0)
   const [energy, setEnergy] = useState(100)
   const [feedback, setFeedback] = useState<"correct" | "incorrect" | null>(null)
+  const [bestScore, setBestScore] = useState(0)
+  const { updateGameProgress } = useProgress()
 
   // Generate a new multiplication problem
   const generateProblem = () => {
     // Adjust difficulty based on altitude
-    const maxNum1 = Math.min(5 + Math.floor(altitude / 100), 12)
-    const maxNum2 = Math.min(5 + Math.floor(altitude / 200), 12)
-
-    const num1 = Math.floor(Math.random() * maxNum1) + 1
-    const num2 = Math.floor(Math.random() * maxNum2) + 1
+    const maxNum = Math.min(5 + Math.floor(altitude / 1000) * 2, 12)
+    const num1 = Math.floor(Math.random() * maxNum) + 1
+    const num2 = Math.floor(Math.random() * maxNum) + 1
 
     setCurrentProblem({ num1, num2 })
     setAnswer("")
@@ -49,49 +50,46 @@ export default function MultiplicationMountainPage() {
     const correctAnswer = currentProblem.num1 * currentProblem.num2
 
     if (userAnswer === correctAnswer) {
-      const newScore = score + 10
-      const newAltitude = altitude + 50
-
-      setScore(newScore)
-      setAltitude(newAltitude)
-      setMaxAltitude(Math.max(maxAltitude, newAltitude))
+      setScore(score + 10)
+      setAltitude(altitude + 100)
+      setMaxAltitude(Math.max(maxAltitude, altitude + 100))
       setFeedback("correct")
-
       setTimeout(() => {
         generateProblem()
-      }, 1000)
+      }, 500)
     } else {
-      setEnergy(Math.max(0, energy - 20))
       setFeedback("incorrect")
-
-      if (energy <= 20) {
-        setTimeout(() => {
-          setGameState("finished")
-        }, 1000)
-      } else {
-        setTimeout(() => {
-          setFeedback(null)
-        }, 1000)
-      }
+      setEnergy(Math.max(0, energy - 20))
     }
   }
 
-  // Energy effect
+  // Energy timer effect
   useEffect(() => {
     let timer: NodeJS.Timeout
 
     if (gameState === "playing" && energy > 0) {
       timer = setTimeout(() => {
-        setEnergy(Math.max(0, energy - 0.5))
+        setEnergy(energy - 1)
       }, 1000)
     } else if (energy === 0 && gameState === "playing") {
       setGameState("finished")
+      
+      // Update best score if needed
+      if (score > bestScore) {
+        setBestScore(score)
+        localStorage.setItem("multiplicationMountainBestScore", score.toString())
+      }
+
+      // Update progress with actual score
+      if (score > 0) {
+        updateGameProgress("5", score) // Multiplication Mountain is game5
+      }
     }
 
     return () => {
       if (timer) clearTimeout(timer)
     }
-  }, [energy, gameState])
+  }, [energy, gameState, score, bestScore, updateGameProgress])
 
   return (
     <div className="container mx-auto space-y-6 py-6">

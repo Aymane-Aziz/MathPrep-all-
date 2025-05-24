@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { ArrowLeft, Trophy, Timer, Star, RotateCcw } from "lucide-react"
+import { useProgress } from "@/contexts/progress-context"
 
 // Define card types
 type CardType = {
@@ -66,6 +67,7 @@ export default function MemoryMatchPage() {
   const [score, setScore] = useState(0)
   const [timeLeft, setTimeLeft] = useState(0)
   const [bestScore, setBestScore] = useState(0)
+  const { updateGameProgress } = useProgress()
 
   // Initialize cards based on difficulty
   const initializeCards = useCallback((diff: Difficulty) => {
@@ -155,20 +157,23 @@ export default function MemoryMatchPage() {
               setBestScore(score + matchScore)
               localStorage.setItem("memoryMatchBestScore", (score + matchScore).toString())
             }
+
+            // Update progress with actual score
+            if (score + matchScore > 0) {
+              updateGameProgress("4", score + matchScore) // Memory Match is game4
+            }
           }
         }, 500)
       } else {
         // No match
         setTimeout(() => {
           const resetCards = cards.map((card) =>
-            card.id === newFlippedCards[0] || card.id === newFlippedCards[1] ? { ...card, flipped: false } : card,
+            card.id === newFlippedCards[0] || card.id === newFlippedCards[1]
+              ? { ...card, flipped: false }
+              : card,
           )
           setCards(resetCards)
           setFlippedCards([])
-
-          // Penalty for wrong match
-          const penalty = 2
-          setScore(Math.max(0, score - penalty))
         }, 1000)
       }
     }

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import clientPromise from "@/lib/mongodb"
 import { signJWT } from "@/lib/jwt"
 import bcrypt from "bcryptjs"
+import { ObjectId } from "mongodb"
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,15 +38,18 @@ export async function POST(req: NextRequest) {
       updatedAt: now,
     })
 
-    // Create initial progress document
+    // Create initial progress document with new schema
+    const progressId = new ObjectId()
     await db.collection("progress").insertOne({
+      id: progressId.toString(),
       userId: result.insertedId,
-      topics: [],
-      games: [],
-      totalStars: 0,
-      totalScore: 0,
-      streakDays: 0,
-      lastLoginDate: now,
+      game1: 0,
+      game2: 0,
+      game3: 0,
+      game4: 0,
+      game5: 0,
+      game6: 0,
+      overallStar: 0,
       createdAt: now,
       updatedAt: now,
     })

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ProgressBar } from "@/components/progress-bar"
 import Link from "next/link"
 import { ArrowLeft, Trophy } from "lucide-react"
+import { useProgress } from "@/contexts/progress-context"
 
 export default function AdditionRacePage() {
   const [gameState, setGameState] = useState<"ready" | "playing" | "finished">("ready")
@@ -17,6 +18,8 @@ export default function AdditionRacePage() {
   const [timeLeft, setTimeLeft] = useState(60)
   const [problems, setProblems] = useState(0)
   const [feedback, setFeedback] = useState<"correct" | "incorrect" | null>(null)
+  const [bestScore, setBestScore] = useState(0)
+  const { updateGameProgress } = useProgress()
 
   // Generate a new addition problem
   const generateProblem = () => {
@@ -63,12 +66,23 @@ export default function AdditionRacePage() {
       }, 1000)
     } else if (timeLeft === 0 && gameState === "playing") {
       setGameState("finished")
+      
+      // Update best score if needed
+      if (score > bestScore) {
+        setBestScore(score)
+        localStorage.setItem("additionRaceBestScore", score.toString())
+      }
+
+      // Update progress with actual score
+      if (score > 0) {
+        updateGameProgress("2", score) // Addition Race is game2
+      }
     }
 
     return () => {
       if (timer) clearTimeout(timer)
     }
-  }, [timeLeft, gameState])
+  }, [timeLeft, gameState, score, bestScore, updateGameProgress])
 
   return (
     <div className="container mx-auto space-y-6 py-6">

@@ -8,6 +8,7 @@ import { ArrowLeft, Trophy, Star, HelpCircle, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
+import { useProgress } from "@/contexts/progress-context"
 import {
   Dialog,
   DialogContent,
@@ -53,6 +54,7 @@ export default function ShapeSorterGame() {
   const [showHint, setShowHint] = useState<boolean>(false)
   const [streak, setStreak] = useState<number>(0)
   const [highScore, setHighScore] = useState<number>(0)
+  const { updateGameProgress } = useProgress()
 
   // Game levels
   const levels: GameLevel[] = [
@@ -370,11 +372,6 @@ export default function ShapeSorterGame() {
       const questionPoints = basePoints + streakBonus + timeBonus
 
       setScore((prev) => prev + questionPoints)
-
-      // Award stars based on streak
-      if (newStreak % 5 === 0) {
-        setStars((prev) => prev + 1)
-      }
     } else {
       setStreak(0)
     }
@@ -403,6 +400,11 @@ export default function ShapeSorterGame() {
     // Update high score if needed
     if (score > highScore) {
       setHighScore(score)
+    }
+
+    // Update progress with actual score
+    if (score > 0) {
+      updateGameProgress("1", score) // Shape Sorter is game1
     }
   }
 
