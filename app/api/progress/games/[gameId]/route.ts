@@ -4,7 +4,7 @@ import clientPromise from "@/lib/mongodb"
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { gameId: string } }
+  context: { params: { gameId: string } }
 ) {
   try {
     // Authenticate request
@@ -22,13 +22,30 @@ export async function PUT(
     const db = client.db("mathworld")
     const progress = await db.collection("progress").findOne({ user_id: userId })
 
+    // If progress doesn't exist, create it
     if (!progress) {
-      return NextResponse.json({ error: "Progress not found" }, { status: 404 })
+      const newProgress = {
+        user_id: userId,
+        game1: 0,
+        game2: 0,
+        game3: 0,
+        game4: 0,
+        game5: 0,
+        game6: 0,
+        overallStar: 0
+      }
+      await db.collection("progress").insertOne(newProgress)
+    }
+
+    // Get the latest progress (either existing or newly created)
+    const currentProgress = await db.collection("progress").findOne({ user_id: userId })
+    if (!currentProgress) {
+      return NextResponse.json({ error: "Failed to create progress" }, { status: 500 })
     }
 
     // Update game score
-    const gameKey = `game${params.gameId}`
-    const currentScore = progress[gameKey] || 0
+    const gameKey = `game${context.params.gameId}`
+    const currentScore = currentProgress[gameKey] || 0
     const newScore = Math.max(currentScore, stars) // Keep the highest score
 
     // Update the specific game's score and overall stars
@@ -37,7 +54,7 @@ export async function PUT(
       {
         $set: {
           [gameKey]: newScore,
-          overallStar: (progress.overallStar || 0) + (newScore - currentScore) // Add the difference to overall stars
+          overallStar: (currentProgress.overallStar || 0) + (newScore - currentScore) // Add the difference to overall stars
         }
       }
     )
