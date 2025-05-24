@@ -61,10 +61,7 @@ export function useGameProgress(gameId: string, maxLevel = 10) {
 
       // If authenticated, update server
       if (isAuthenticated) {
-        updateGameProgress(gameId, {
-          level: newLevel,
-          lastPlayed: new Date().toISOString(),
-        })
+        updateGameProgress(gameId, newLevel * 10) // Convert level to stars
       }
     }
   }
@@ -83,10 +80,7 @@ export function useGameProgress(gameId: string, maxLevel = 10) {
 
     // If authenticated, update server
     if (isAuthenticated) {
-      updateGameProgress(gameId, {
-        starsEarned: totalStars,
-        lastPlayed: new Date().toISOString(),
-      })
+      updateGameProgress(gameId, totalStars)
     }
   }
 
@@ -104,10 +98,7 @@ export function useGameProgress(gameId: string, maxLevel = 10) {
 
       // If authenticated, update server
       if (isAuthenticated) {
-        updateGameProgress(gameId, {
-          levelsUnlocked: level,
-          lastPlayed: new Date().toISOString(),
-        })
+        updateGameProgress(gameId, level * 10) // Convert level to stars
       }
     }
   }

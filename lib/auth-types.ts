@@ -16,7 +16,6 @@ export type AuthState = {
 }
 
 export type Progress = {
-  id: string
   userId: string
   game1: number
   game2: number
@@ -25,6 +24,11 @@ export type Progress = {
   game5: number
   game6: number
   overallStar: number
+}
+
+export type GameProgress = {
+  starsEarned: number
+  levelsUnlocked: number
 }
 
 export type AuthContextType = {
@@ -46,4 +50,6 @@ export type ProgressContextType = {
   error: string | null
   updateGameProgress: (gameId: string, stars: number) => Promise<void>
   refreshProgress: () => Promise<void>
+  getGameProgress: (gameId: string) => GameProgress | null
+  getGameLevel: (gameId: string) => number
 }

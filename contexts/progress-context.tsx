@@ -61,6 +61,23 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Get game progress
+  const getGameProgress = (gameId: string) => {
+    if (!progress) return null
+    const gameKey = `game${gameId}` as keyof Progress
+    return {
+      starsEarned: progress[gameKey] as number,
+      levelsUnlocked: Math.floor((progress[gameKey] as number) / 10) + 1
+    }
+  }
+
+  // Get game level
+  const getGameLevel = (gameId: string) => {
+    if (!progress) return 0
+    const gameKey = `game${gameId}` as keyof Progress
+    return Math.floor((progress[gameKey] as number) / 10) + 1
+  }
+
   // Update game progress
   const updateGameProgress = async (gameId: string, stars: number) => {
     if (!isAuthenticated || !progress) return
@@ -71,10 +88,10 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       // Optimistic update
       const gameKey = `game${gameId}` as keyof Progress
       const currentStars = progress[gameKey] as number
-      const newStars = currentStars + stars
+      const newStars = Math.max(currentStars, stars) // Keep the highest score
       const totalStars = Object.keys(progress)
         .filter(key => key.startsWith('game'))
-        .reduce((sum, key) => sum + (progress[key as keyof Progress] as number), 0) + stars
+        .reduce((sum, key) => sum + (progress[key as keyof Progress] as number), 0) + (newStars - currentStars)
 
       const updatedProgress = {
         ...progress,
@@ -105,6 +122,8 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         error,
         updateGameProgress,
         refreshProgress,
+        getGameProgress,
+        getGameLevel,
       }}
     >
       {children}

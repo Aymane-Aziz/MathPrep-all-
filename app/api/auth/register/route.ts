@@ -38,10 +38,8 @@ export async function POST(req: NextRequest) {
       updatedAt: now,
     })
 
-    // Create initial progress document with new schema
-    const progressId = new ObjectId()
+    // Create initial progress document
     await db.collection("progress").insertOne({
-      id: progressId.toString(),
       userId: result.insertedId,
       game1: 0,
       game2: 0,
@@ -60,20 +58,7 @@ export async function POST(req: NextRequest) {
       email,
     })
 
-    // Return user data and token
-    return NextResponse.json(
-      {
-        user: {
-          id: result.insertedId.toString(),
-          name,
-          email,
-          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`,
-          createdAt: now.toISOString(),
-        },
-        token,
-      },
-      { status: 201 },
-    )
+    return NextResponse.json({ token })
   } catch (error) {
     console.error("Registration error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

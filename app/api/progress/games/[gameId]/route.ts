@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { authenticateRequest, unauthorized } from "@/lib/auth-middleware"
 import clientPromise from "@/lib/mongodb"
+import { ObjectId } from "mongodb"
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { gameId: string } }
+  { params }: { params: { gameId: string } }
 ) {
+  const gameId = params.gameId // Extract the gameId parameter first
+  
   try {
     // Authenticate request
     const { authenticated, userId } = await authenticateRequest(request)
@@ -20,41 +23,40 @@ export async function PUT(
 
     const client = await clientPromise
     const db = client.db("mathworld")
-    const progress = await db.collection("progress").findOne({ user_id: userId })
+    
+    // Find the most recent progress document for this user
+    const progress = await db.collection("progress").findOne(
+      { userId: new ObjectId(userId) },
+      { sort: { createdAt: -1 } }
+    )
 
-    // If progress doesn't exist, create it
     if (!progress) {
-      const newProgress = {
-        user_id: userId,
-        game1: 0,
-        game2: 0,
-        game3: 0,
-        game4: 0,
-        game5: 0,
-        game6: 0,
-        overallStar: 0
-      }
-      await db.collection("progress").insertOne(newProgress)
+      return NextResponse.json({ error: "Progress not found" }, { status: 404 })
     }
 
-    // Get the latest progress (either existing or newly created)
-    const currentProgress = await db.collection("progress").findOne({ user_id: userId })
-    if (!currentProgress) {
-      return NextResponse.json({ error: "Failed to create progress" }, { status: 500 })
-    }
-
-    // Update game score
-    const gameKey = `game${context.params.gameId}`
-    const currentScore = currentProgress[gameKey] || 0
+    // Update game score in existing document
+    const gameKey = `game${gameId}`
+    const currentScore = progress[gameKey] || 0
     const newScore = Math.max(currentScore, stars) // Keep the highest score
 
-    // Update the specific game's score and overall stars
+    // Calculate new overall stars
+    const totalStars = Object.keys(progress)
+      .filter(key => key.startsWith('game'))
+      .reduce((sum, key) => {
+        if (key === gameKey) {
+          return sum + newScore
+        }
+        return sum + (progress[key] || 0)
+      }, 0)
+
+    // Update the specific game's score and overall stars using the document's _id
     const result = await db.collection("progress").updateOne(
-      { user_id: userId },
+      { _id: progress._id },
       {
         $set: {
           [gameKey]: newScore,
-          overallStar: (currentProgress.overallStar || 0) + (newScore - currentScore) // Add the difference to overall stars
+          overallStar: totalStars,
+          updatedAt: new Date()
         }
       }
     )

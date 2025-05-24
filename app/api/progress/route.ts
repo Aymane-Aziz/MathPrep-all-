@@ -25,7 +25,6 @@ export async function GET(req: NextRequest) {
       // Create initial progress if not found
       const now = new Date()
       const initialProgress = {
-        id: new ObjectId().toString(),
         userId: new ObjectId(userId),
         game1: 0,
         game2: 0,
