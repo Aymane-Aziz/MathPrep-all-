@@ -19,12 +19,41 @@ export default function AdditionRacePage() {
   const [problems, setProblems] = useState(0)
   const [feedback, setFeedback] = useState<"correct" | "incorrect" | null>(null)
   const [bestScore, setBestScore] = useState(0)
-  const { updateGameProgress } = useProgress()
+  const [difficultyLevel, setDifficultyLevel] = useState(1)
+  const [showDifficultyUp, setShowDifficultyUp] = useState(false)
+  const { updateGameProgress, progress } = useProgress()
+
+  // Determine initial difficulty level based on previous high score
+  useEffect(() => {
+    if (progress?.game2) {
+      const previousHighScore = progress.game2
+      if (previousHighScore >= 500) {
+        setDifficultyLevel(3)
+      } else if (previousHighScore >= 100) {
+        setDifficultyLevel(2)
+      }
+    }
+  }, [progress])
 
   // Generate a new addition problem
   const generateProblem = () => {
-    const num1 = Math.floor(Math.random() * 10) + 1
-    const num2 = Math.floor(Math.random() * 10) + 1
+    let maxNum: number
+    
+    // Use the current difficulty level to determine the number range
+    switch (difficultyLevel) {
+      case 3:
+        maxNum = 1000
+        break
+      case 2:
+        maxNum = 100
+        break
+      default:
+        maxNum = 10
+    }
+    
+    const num1 = Math.floor(Math.random() * maxNum) + 1
+    const num2 = Math.floor(Math.random() * maxNum) + 1
+    
     setCurrentProblem({ num1, num2 })
     setAnswer("")
     setFeedback(null)
@@ -45,8 +74,21 @@ export default function AdditionRacePage() {
     const correctAnswer = currentProblem.num1 + currentProblem.num2
 
     if (userAnswer === correctAnswer) {
-      setScore(score + 10)
+      const newScore = score + 10
+      setScore(newScore)
       setFeedback("correct")
+
+      // Check if we need to increase difficulty level
+      if (difficultyLevel === 1 && newScore >= 100) {
+        setDifficultyLevel(2)
+        setShowDifficultyUp(true)
+        setTimeout(() => setShowDifficultyUp(false), 2000)
+      } else if (difficultyLevel === 2 && newScore >= 500) {
+        setDifficultyLevel(3)
+        setShowDifficultyUp(true)
+        setTimeout(() => setShowDifficultyUp(false), 2000)
+      }
+
       setTimeout(() => {
         generateProblem()
         setProblems(problems + 1)
@@ -153,7 +195,16 @@ export default function AdditionRacePage() {
                 <Badge variant="outline" className="bg-orange-100 text-orange-700">
                   Problems: {problems}
                 </Badge>
+                <Badge variant="outline" className="bg-orange-100 text-orange-700">
+                  Level: {difficultyLevel}
+                </Badge>
               </div>
+
+              {showDifficultyUp && (
+                <div className="animate-bounce rounded-lg bg-yellow-100 p-2 text-center text-yellow-700">
+                  🎉 Difficulty Increased! Numbers up to {difficultyLevel === 2 ? "100" : "1000"} now! 🎉
+                </div>
+              )}
 
               <div className="mb-4">
                 <ProgressBar value={(timeLeft / 60) * 100} color="bg-orange-500" />

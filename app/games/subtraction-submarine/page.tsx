@@ -20,15 +20,41 @@ export default function SubtractionSubmarinePage() {
   const [oxygen, setOxygen] = useState(100)
   const [feedback, setFeedback] = useState<"correct" | "incorrect" | null>(null)
   const [bestScore, setBestScore] = useState(0)
-  const { updateGameProgress } = useProgress()
+  const [difficultyLevel, setDifficultyLevel] = useState(1)
+  const [showDifficultyUp, setShowDifficultyUp] = useState(false)
+  const { updateGameProgress, progress } = useProgress()
+
+  // Determine initial difficulty level based on previous high score
+  useEffect(() => {
+    if (progress?.game3) {
+      const previousHighScore = progress.game3
+      if (previousHighScore >= 500) {
+        setDifficultyLevel(3)
+      } else if (previousHighScore >= 100) {
+        setDifficultyLevel(2)
+      }
+    }
+  }, [progress])
 
   // Generate a new subtraction problem
   const generateProblem = () => {
-    // Adjust difficulty based on depth
-    const maxNum1 = Math.min(10 + Math.floor(depth / 100) * 5, 20)
-    const num1 = Math.floor(Math.random() * maxNum1) + 5
-    const num2 = Math.floor(Math.random() * num1)
-
+    let maxNum: number
+    
+    // Use the current difficulty level to determine the number range
+    switch (difficultyLevel) {
+      case 3:
+        maxNum = 1000
+        break
+      case 2:
+        maxNum = 100
+        break
+      default:
+        maxNum = 10
+    }
+    
+    const num1 = Math.floor(Math.random() * maxNum) + 1
+    const num2 = Math.floor(Math.random() * num1) // Ensure num2 is always less than num1
+    
     setCurrentProblem({ num1, num2 })
     setAnswer("")
     setFeedback(null)
@@ -50,10 +76,23 @@ export default function SubtractionSubmarinePage() {
     const correctAnswer = currentProblem.num1 - currentProblem.num2
 
     if (userAnswer === correctAnswer) {
-      setScore(score + 10)
+      const newScore = score + 10
+      setScore(newScore)
       setDepth(depth + 50)
       setMaxDepth(Math.max(maxDepth, depth + 50))
       setFeedback("correct")
+
+      // Check if we need to increase difficulty level
+      if (difficultyLevel === 1 && newScore >= 100) {
+        setDifficultyLevel(2)
+        setShowDifficultyUp(true)
+        setTimeout(() => setShowDifficultyUp(false), 2000)
+      } else if (difficultyLevel === 2 && newScore >= 500) {
+        setDifficultyLevel(3)
+        setShowDifficultyUp(true)
+        setTimeout(() => setShowDifficultyUp(false), 2000)
+      }
+
       setTimeout(() => {
         generateProblem()
       }, 500)
@@ -95,7 +134,7 @@ export default function SubtractionSubmarinePage() {
     <div className="container mx-auto space-y-6 py-6">
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-          <Link href="/games">
+          <Link href="/topics/subtraction">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -108,11 +147,9 @@ export default function SubtractionSubmarinePage() {
             <CardTitle className="flex items-center gap-2 text-purple-700">
               <span className="text-2xl">🚢</span> Subtraction Submarine
             </CardTitle>
-            {gameState === "playing" && (
-              <Badge variant="outline" className="bg-white text-purple-700">
-                Depth: {depth}m
-              </Badge>
-            )}
+            <Badge variant="outline" className="bg-white text-purple-700">
+              {gameState === "playing" ? `${oxygen}% oxygen` : "100% oxygen"}
+            </Badge>
           </div>
           <CardDescription>Dive deep by solving subtraction problems!</CardDescription>
         </CardHeader>
@@ -129,15 +166,15 @@ export default function SubtractionSubmarinePage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-xl">2️⃣</span>
-                    <span>Each correct answer takes you 50 meters deeper</span>
+                    <span>Type your answer and press "Submit"</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-xl">3️⃣</span>
-                    <span>Watch your oxygen level - it decreases over time</span>
+                    <span>Each correct answer gives you 10 points</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-xl">4️⃣</span>
-                    <span>Wrong answers cost you 20% oxygen!</span>
+                    <span>Watch your oxygen level - wrong answers reduce it!</span>
                   </li>
                 </ul>
               </div>
@@ -147,7 +184,7 @@ export default function SubtractionSubmarinePage() {
                   onClick={startGame}
                   className="rounded-full bg-purple-500 px-8 py-6 text-xl font-bold text-white hover:bg-purple-600"
                 >
-                  Start Diving!
+                  Start Game!
                 </Button>
               </div>
             </div>
@@ -159,16 +196,22 @@ export default function SubtractionSubmarinePage() {
                 <Badge variant="outline" className="bg-purple-100 text-purple-700">
                   Score: {score}
                 </Badge>
-                <div className="w-1/2">
-                  <div className="mb-1 flex justify-between">
-                    <span className="text-xs font-medium">Oxygen</span>
-                    <span className="text-xs font-medium">{oxygen}%</span>
-                  </div>
-                  <ProgressBar
-                    value={oxygen}
-                    color={oxygen > 50 ? "bg-green-500" : oxygen > 20 ? "bg-yellow-500" : "bg-red-500"}
-                  />
+                <Badge variant="outline" className="bg-purple-100 text-purple-700">
+                  Depth: {depth}m
+                </Badge>
+                <Badge variant="outline" className="bg-purple-100 text-purple-700">
+                  Level: {difficultyLevel}
+                </Badge>
+              </div>
+
+              {showDifficultyUp && (
+                <div className="animate-bounce rounded-lg bg-yellow-100 p-2 text-center text-yellow-700">
+                  🎉 Difficulty Increased! Numbers up to {difficultyLevel === 2 ? "100" : "1000"} now! 🎉
                 </div>
+              )}
+
+              <div className="mb-4">
+                <ProgressBar value={oxygen} color="bg-purple-500" />
               </div>
 
               <div className="rounded-lg bg-white p-6 shadow-inner">
@@ -218,27 +261,12 @@ export default function SubtractionSubmarinePage() {
                     }`}
                   >
                     {feedback === "correct" ? (
-                      <span>Correct! Diving deeper! ✅</span>
+                      <span>Correct! Great job! ✅</span>
                     ) : (
-                      <span>Not quite. Oxygen leaking! ❌</span>
+                      <span>Not quite. Try again! ❌</span>
                     )}
                   </div>
                 )}
-              </div>
-
-              <div className="relative h-40 overflow-hidden rounded-lg bg-gradient-to-b from-blue-200 to-blue-800">
-                <div
-                  className="absolute bottom-0 left-0 w-full transition-all duration-500"
-                  style={{ height: `${Math.min(100, depth / 10)}%` }}
-                >
-                  <div className="h-full w-full bg-blue-900 opacity-70"></div>
-                </div>
-                <div
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 transform transition-all duration-500"
-                  style={{ bottom: `${Math.min(90, depth / 10)}%` }}
-                >
-                  <div className="text-4xl">🚢</div>
-                </div>
               </div>
             </div>
           )}
@@ -251,7 +279,7 @@ export default function SubtractionSubmarinePage() {
                 </div>
               </div>
 
-              <h2 className="text-2xl font-bold text-purple-700">Dive Complete!</h2>
+              <h2 className="text-2xl font-bold text-purple-700">Game Over!</h2>
 
               <div className="rounded-lg bg-purple-50 p-6">
                 <div className="space-y-4">
@@ -261,7 +289,7 @@ export default function SubtractionSubmarinePage() {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-medium text-purple-700">Maximum Depth</h3>
+                    <h3 className="text-lg font-medium text-purple-700">Max Depth</h3>
                     <p className="text-4xl font-bold text-purple-600">{maxDepth}m</p>
                   </div>
                 </div>
@@ -272,11 +300,11 @@ export default function SubtractionSubmarinePage() {
                   onClick={startGame}
                   className="rounded-full bg-purple-500 px-6 py-2 text-white hover:bg-purple-600"
                 >
-                  Dive Again
+                  Play Again
                 </Button>
 
                 <Button asChild variant="outline" className="rounded-full">
-                  <Link href="/games">Back to Games</Link>
+                  <Link href="/topics/subtraction">Back to Lessons</Link>
                 </Button>
               </div>
             </div>

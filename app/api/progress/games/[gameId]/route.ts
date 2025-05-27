@@ -5,9 +5,9 @@ import { ObjectId } from "mongodb"
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { gameId: string } }
+  context: { params: { gameId: string } }
 ) {
-  const gameId = params.gameId // Extract the gameId parameter first
+  const { gameId } = await context.params; // Extract the gameId parameter first
   
   try {
     // Authenticate request
