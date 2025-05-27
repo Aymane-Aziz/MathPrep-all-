@@ -68,8 +68,14 @@ export const authApi = {
   },
 
   logout: async () => {
-    // Remove token from localStorage
-    localStorage.removeItem("mathworld_token")
+    try {
+      await fetchWithAuth("/auth/logout", {
+        method: "POST",
+      })
+    } finally {
+      // Remove token from localStorage
+      localStorage.removeItem("mathworld_token")
+    }
   },
 
   resetPassword: async (email: string) => {

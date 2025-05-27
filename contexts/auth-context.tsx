@@ -80,8 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error: null,
       })
 
-      // Redirect to home page
-      router.push("/home")
+      // Force a page reload to ensure all contexts are properly initialized
+      window.location.href = "/home"
     } catch (error: any) {
       setAuth((prev) => ({
         ...prev,
@@ -111,8 +111,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error: null,
       })
 
-      // Redirect to home page
-      router.push("/home")
+      // Force a page reload to ensure all contexts are properly initialized
+      window.location.href = "/home"
     } catch (error: any) {
       setAuth((prev) => ({
         ...prev,

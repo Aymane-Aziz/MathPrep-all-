@@ -30,11 +30,43 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch user progress when authenticated
   useEffect(() => {
-    if (isAuthenticated && user) {
-      refreshProgress()
-    } else {
-      setProgress(null)
-      setIsLoading(false)
+    let mounted = true
+
+    const initializeProgress = async () => {
+      if (!isAuthenticated || !user) {
+        setProgress(null)
+        setIsLoading(false)
+        return
+      }
+
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const progressData = await progressApi.getProgress()
+        if (mounted) {
+          setProgress(progressData)
+        }
+      } catch (error: any) {
+        console.error("Failed to fetch progress:", error)
+        if (mounted) {
+          setError(error.message || "Failed to load progress data")
+          // Initialize with empty progress if we can't fetch from server
+          if (!progress) {
+            setProgress(initialProgress)
+          }
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    initializeProgress()
+
+    return () => {
+      mounted = false
     }
   }, [isAuthenticated, user])
 
@@ -51,11 +83,6 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error("Failed to fetch progress:", error)
       setError(error.message || "Failed to load progress data")
-
-      // Initialize with empty progress if we can't fetch from server
-      if (!progress) {
-        setProgress(initialProgress)
-      }
     } finally {
       setIsLoading(false)
     }
