@@ -18,7 +18,7 @@ Follow these steps to set up and run the Math World application on your local ma
 
 \`\`\`
 NEXT_PUBLIC_API_URL=http://localhost:3000
-MONGODB_URI=mongodb+srv://Aymane_Aziz:aymaneAziz1909@room.jr8hd.mongodb.net/mathworld
+MONGODB_URI=
 JWT_SECRET=your_secure_random_string_here
 \`\`\`
 
